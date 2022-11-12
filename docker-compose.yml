@@ -1,0 +1,35 @@
+version: '3.5'
+services:
+  jaeger:
+    container_name: jaeger
+    image: 'jaegertracing/all-in-one:1'
+    ports:      
+      - '6831:6831/udp'
+      - '6832:6832/udp'
+      - '5778:5778'
+      - '16686:16686'
+      - '4317:4317'
+      - '4318:4318'
+      - '14250:14250'
+      - '14268:14268'
+      - '14269:14269'
+      - '9411:9411'
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+      - COLLECTOR_OTLP_ENABLED=true
+  servicio1:
+    container_name: servicio1
+    image: 'servicio1:latest'
+    ports:      
+      - '8080:8080'
+    command: java -jar /opt/service/servicio1-0.0.1-SNAPSHOT.jar --spring.application.name=Service-1 --server.port=8080 --opentracing.jaeger.http-sender.url=http://jaeger:14268/api/traces --cl.trabajando.config.url-servicio2=http://servicio2
+    depends_on:
+      - jaeger
+  servicio2:
+    container_name: servicio2
+    image: 'servicio2:latest'
+    ports:      
+      - '8090:8080'
+    command: java -jar /opt/service/servicio2-0.0.1-SNAPSHOT.jar --spring.application.name=Service-2 --server.port=8080 --opentracing.jaeger.http-sender.url=http://jaeger:14268/api/traces
+    depends_on:
+      - jaeger
